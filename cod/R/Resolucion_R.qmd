@@ -72,3 +72,15 @@ data %>%
 ```
 
 ##Detecte el porcentaje de valores faltantes en cada una de las columnas.
+
+```{r}
+porcentaje.na <- sapply(data, function(x) {
+  sum(is.na(x)) / length(x) * 100
+})
+na <- data.frame(
+  COLUMNA = names(porcentaje.na),
+  PORCENTAJE = round(porcentaje.na, 2)
+)
+knitr::kable(na, caption = "Porcentaje de valores nulos en cada columna.") #Esto es simplemente para que la tabla se vea mas estetica
+```
+
