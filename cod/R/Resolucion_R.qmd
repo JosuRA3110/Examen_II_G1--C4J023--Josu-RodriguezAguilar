@@ -84,3 +84,47 @@ na <- data.frame(
 knitr::kable(na, caption = "Porcentaje de valores nulos en cada columna.") #Esto es simplemente para que la tabla se vea mas estetica
 ```
 
+##Impute los valores faltantes haciendo uso de algún método de su preferencia.
+
+```{r}
+moda <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))] #Aca calculamos el valor que mas se repite es un vector, donde primero obtenemos sus valores unicos (base para entender sus frecuencicas). Posterior a ello, cuenta cuantas veces aparece cada uno utilizando match y tabulate, identifica cual tiene la frecuencia mas alta con which.max y devuelve ese valor, es decir, da la moda de un conjunto de datos.
+}
+
+data <- data %>%
+  mutate(
+    SALARIO.IMPUTADO = ifelse(
+      is.na(SALARIO) | SALARIO == "", #Aca vemos las dos posibilidades de que este vacio o tenga un dato NA
+      mean(as.numeric(SALARIO), na.rm = TRUE),#Sacamos promedio para sustituir NAs
+      SALARIO
+    ),
+    
+    EDAD.IMPUTADOS = ifelse(
+      is.na(EDAD) | EDAD == "",
+      round(mean(as.numeric(EDAD), na.rm = TRUE)),#Aca redondeo pues los datos de la tabla son enteros y la edad promedio es decimal.
+      EDAD
+    ),
+    
+    TIPO.ASEGURAMIENTO.IMPUTADO = ifelse(
+      is.na(TIPO_ASEGURAMIENTO) | TIPO_ASEGURAMIENTO == "",
+      moda(TIPO_ASEGURAMIENTO), #Encontramos la moda de os tipos de aseguramiento para que reemplacen los NAs
+      TIPO_ASEGURAMIENTO
+    )
+  )
+
+imputados <- data %>% 
+  select (SALARIO.IMPUTADO, EDAD.IMPUTADOS, TIPO.ASEGURAMIENTO.IMPUTADO) %>% 
+  head(5)
+
+knitr::kable(imputados, caption = "Datos imputados por las columnas vacias.") #Nuevamente arreglamos la esteticad de los resultados
+```
+
+
+##Realice gráficos donde se vea la cantidad de individuos por cada categoría. Analice los resultados.
+
+
+```{r}
+
+```
+
