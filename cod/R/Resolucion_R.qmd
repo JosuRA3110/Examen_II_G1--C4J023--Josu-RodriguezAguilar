@@ -208,6 +208,66 @@ El cumplimiento de pagos por parte de los asegurados es alto, dado que la propor
 ##Realice un gráfico para cada una de las variables categóricas en donde se vea el porcentaje de personas morosa por cada clase. Analice los resultados.
 
 ```{r}
+#Para este ejercicio procedemos por la misma metodología tq:
+porcentaje.morosos <- function(df, variable) {
+  df %>%
+    group_by(across(all_of(variable))) %>%
+    summarise(
+      total = n(),
+      morosos = sum(INDICADOR_MOROSO == "SI", na.rm = TRUE),
+      porcentaje = morosos / total * 100,
+      .groups = "drop" #Vea que nuevamente es una funcion donde tenemos qu recibir un df y la columna por ver, que seria la variable categorica luego se agrupa  conforme dicha variable y se cuenta la cantidad de datos y morosos en relacion a la misma para luego dividirla con respecto a los subgrupos categoricos de dicha variable mediante el calculo del porcentaje. 
+    )
+}
+
+#Creamos una funcion para graficas de morosos:
+grafico.morosos <- function(df, variable, horizontal = FALSE) {
+  p <- ggplot(df, aes_string(x = variable, y = "porcentaje", fill = variable)) +
+    geom_col() +
+    geom_text(aes_string(label = "paste0(round(porcentaje,1),'%')"),
+              vjust = ifelse(horizontal, 0.5, -0.3),
+              hjust = ifelse(horizontal, -0.2, 0.5),
+              size = 4) +
+    labs(y = "Porcentaje de morosos", x = NULL, title = paste("Morosidad por", variable)) +
+    theme_minimal(base_size = 13) +
+    theme(legend.position = "none")
+  
+  if(horizontal) p <- p + coord_flip()
+  return(p)
+}
+
+# calculamos el porcentaje de morosos para graficar:
+morosos.sexo <- porcentaje.morosos(data, "SEXO")
+morosos.tipo <- porcentaje.morosos(data, "TIPO_ASEGURAMIENTO")
+morosos.sector <- porcentaje.morosos(data, "SECTOR")
+morosos.activo <- porcentaje.morosos(data, "INDICADOR_ACTIVO")
+morosos.extranjero <- porcentaje.morosos(data, "INDICADOR.EXTRANJERO")
 
 ```
+
+Analisis de resultados:
+
+```{r}
+#Ahora procedemos a graficar cada variable categorica: 
+grafico.morosos(morosos.sexo, "SEXO")
+
+grafico.morosos(morosos.tipo, "TIPO_ASEGURAMIENTO", horizontal = TRUE)
+
+grafico.morosos(morosos.sector, "SECTOR")
+
+grafico.morosos(morosos.activo, "INDICADOR_ACTIVO", horizontal = TRUE)
+
+grafico.morosos(morosos.extranjero, "INDICADOR.EXTRANJERO", horizontal = TRUE)
+```
+
+Con los graficos ya hechos, se noto que los niveles de morosidad son relativamente altos entre los trabajadores independientes y las personas que no tienen un seguro activo. Esto es lógico en el caso de quienes no poseen seguro activo, ya que la morosidad puede acumularse por falta de pago y posterior cancelación. Por otro lado, es preocupante que los trabajadores independientes descuiden el pago de sus cuotas regularmente. También se identifican variables con morosidad igual a cero: por ejemplo, los pensionados en su propio sistema no presentan morosidad, dado que cuentan con un seguro privado estable; de manera similar, los convenios especiales de asegurados voluntarios muestran bajos niveles de morosidad, probablemente por políticas organizadas de pago y por la menor cantidad de seguros cubiertos. Finalmente, la morosidad en las demás variables categóricas oscila entre el 13% y el 24%, lo cual puede deberse a las diversas condiciones económicas de cada sector y a posibles crisis imprevistas.
+
+
+
+##Para las variables numéricas realice gráficos de barras donde se ponga un color de acuerdo a si es moroso o no. Analice los resultados.
+
+```{r}
+
+```
+
 
