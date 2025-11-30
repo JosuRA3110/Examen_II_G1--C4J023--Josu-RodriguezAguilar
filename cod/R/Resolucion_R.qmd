@@ -125,6 +125,89 @@ knitr::kable(imputados, caption = "Datos imputados por las columnas vacias.") #N
 
 
 ```{r}
+library(ggplot2)
+
+conteo.categoria <- function(df, variable) {
+  df %>%
+    group_by(across({{variable}})) %>%
+    summarise(CONTEO = n(), .groups = "drop") #Aca realizamos una funcion de conteo para las categorias tal que, recibe un data frame y una variable que es la columna dada. entonces agrupamos por las diferntes variables que presenta la columna dada y realiza un conteo de cada una y devuelve una tabla con los diferentes grupos dentreo de la columna y su conteo especifico.
+}
+conteo.sexo <- conteo.categoria(data, SEXO)
+conteo.tipo <- conteo.categoria(data, TIPO_ASEGURAMIENTO)
+conteo.sector <- conteo.categoria(data, SECTOR)
+conteo.activo <- conteo.categoria(data, INDICADOR_ACTIVO)
+conteo.extranjero <- conteo.categoria(data, INDICADOR.EXTRANJERO)
+conteo.moroso <- conteo.categoria(data, INDICADOR_MOROSO) #Aca preparamos todos los conteos para realizar los respectivos graficos.
+
+grafico.cat <- function(df, variable, horizontal = FALSE) {#Aca realizamos una funcion para aplizar a cada tipo de variable categorica y lograr graficarlas.
+  
+  p <- ggplot(df, aes(x = .data[[variable]], 
+                      y = CONTEO, 
+                      fill = .data[[variable]])) +
+    geom_col() +
+    geom_text(
+      aes(label = CONTEO),
+      size = 4,
+      vjust = ifelse(horizontal, 0.5, -0.3),
+      hjust = ifelse(horizontal, -0.2, 0.5)
+    ) +
+    theme_minimal(base_size = 13) +
+    theme(legend.position = "none")
+  
+  if (horizontal) {
+    p <- p + coord_flip()
+  }
+return(p)  
+}
+
+```
+
+Analisis de resultados:
+
+```{r}
+#Ahora procedemos a graficar cada variable categorica: 
+grafico.cat(conteo.sexo, "SEXO")
+```
+
+Cabe destacar que, dado que la población masculina es mayor entre los asegurados, las tendencias observadas tienden a reflejar principalmente el comportamiento de los hombres. Esto implica que cualquier análisis agregado podría estar sesgado hacia patrones masculinos, y sería recomendable considerar desagregaciones por sexo para obtener conclusiones más equilibradas pues pueden conllevar a analsis sesgados. 
+
+
+```{r}
+grafico.cat(conteo.tipo, "TIPO_ASEGURAMIENTO")
+```
+
+La mayoría de los asegurados pertenece al grupo de Asalariados, lo que indica que el análisis del conjunto de datos estará fuertemente influenciado por sus características y comportamientos, como la estabilidad laboral, la afiliación regular y la utilización de servicios de salud vinculados al empleo. En contraste, categorías como Convenios Especiales y Pensionados en su propio sistema tienen una participación muy baja, lo que sugiere que las tendencias observadas podrían no reflejar adecuadamente la situación de estos grupos. En consecuencia, el dominio de los asalariados implica que cualquier conclusión general del sistema asegurador estará mayormente orientada por este segmento.
+
+
+```{r}
+grafico.cat(conteo.sector, "SECTOR")
+```
+
+Se observa que gran parte de los datos corresponde al sector privado, lo que hace que el análisis se centre principalmente en su comportamiento. Esto implica que las tendencias identificadas reflejan sobre todo los patrones de aseguramiento, uso de servicios y riesgos de los afiliados del sector privado, dejando menos visibilidad sobre el comportamiento del sector público. Por ello, las conclusiones podrían no ser completamente representativas de toda la población asegurada, y sería recomendable complementar con información del sector público para tener un panorama más completo del sistema de aseguramiento.
+
+
+```{r}
+grafico.cat(conteo.activo, "INDICADOR_ACTIVO", horizontal = TRUE)
+```
+
+Se denota una predominancia de los asegurados con indicadores de activos, por lo que se toma una vision principalmente enfocada en personas que poseen seguros vigentes, viendo asi la cobertura y el comportamiento en los servicios de asegurados, sin embargo, al ver esa perspectiva de manera mayoritaria se puede perder el hilo de aquellos que no tengan una cobertura actual. 
+
+```{r}
+grafico.cat(conteo.extranjero, "INDICADOR.EXTRANJERO")
+```
+
+Dado que la mayor parte de los datos corresponde a asegurados no extranjeros, se puede asumir que el análisis representa principalmente la visión nacional del sistema de aseguramiento. Esto permite identificar las características, comportamientos y patrones predominantes entre los asegurados nacionales, aunque limita la representatividad sobre la población extranjera dentro del conjunto de datos.
+
+```{r}
+grafico.cat(conteo.moroso, "INDICADOR_MOROSO")
+```
+
+El cumplimiento de pagos por parte de los asegurados es alto, dado que la proporción de morosos es baja en comparación con los que mantienen sus cuotas al día. Esto sugiere que se pueden implementar seguros más dependientes del pago puntual, contando con un riesgo reducido por incumplimiento.
+
+
+##Realice un gráfico para cada una de las variables categóricas en donde se vea el porcentaje de personas morosa por cada clase. Analice los resultados.
+
+```{r}
 
 ```
 
