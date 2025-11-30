@@ -267,7 +267,92 @@ Con los graficos ya hechos, se noto que los niveles de morosidad son relativamen
 ##Para las variables numéricas realice gráficos de barras donde se ponga un color de acuerdo a si es moroso o no. Analice los resultados.
 
 ```{r}
+data <- data %>%
+  mutate(
+    INDICADOR_MOROSO = toupper(as.character(INDICADOR_MOROSO)),
+    RANGO.EDAD = cut(EDAD.IMPUTADOS,
+                     breaks = c(0, 25, 35, 45, 55, 66, Inf),
+                     labels = c("0-25", "26-35", "36-45", "46-55", "56-66", "66+"),
+                     right = TRUE),
+    RANGO.SALARIO = cut(SALARIO.IMPUTADO,
+                        breaks = c(0, 300000, 600000, Inf),
+                        labels = c("0-300k", "300k-600k", "600k+"),
+                        right = TRUE)
+  )
 
+# Gráfico morosidad y edad
+ggplot(data, aes(x = RANGO.EDAD, fill = INDICADOR_MOROSO)) +
+  geom_bar(position = "stack", color = "black") +
+  scale_fill_manual(values = c("SI" = "red", "NO" = "steelblue")) +
+  labs(title = "Distribución de morosos por rango de edad",
+       x = "Rango de edad",
+       y = "Cantidad de personas",
+       fill = "Moroso") +
+  theme_minimal(base_size = 13)
+
+# Gráfico morosidad y salarios
+ggplot(data, aes(x = RANGO.SALARIO, fill = INDICADOR_MOROSO)) +
+  geom_bar(position = "stack", color = "black") +
+  scale_fill_manual(values = c("SI" = "red", "NO" = "steelblue")) +
+  labs(title = "Distribución de morosos por rango de salario",
+       x = "Rango de salario",
+       y = "Cantidad de personas",
+       fill = "Moroso") +
+  theme_minimal(base_size = 13)
 ```
 
+Analisis de resultados: 
 
+Con respecto a la edad y la morosidad, el análisis indica que la morosidad se concentra principalmente en el rango de edad de 36 a 55 años, lo que sugiere que las personas en su etapa productiva media podrían enfrentar mayores compromisos financieros y presiones económicas, elevando su riesgo de retrasos en los pagos. En consecuencia, la mayoría de los morosos se encuentra entre los 26 y 55 años. Por otro lado, los grupos más jóvenes (14–25 años) y los adultos mayores (>66 años) muestran niveles de morosidad más bajos, probablemente debido a una menor carga de deudas, ingresos más estables o el acceso a subsidios y pensiones.
+
+Por parte de los salarios, la morosidad es más elevada en el grupo de ingresos medios (300 001–600 000), donde se concentra la mayor parte de la población asegurada. En contraste, los salarios bajos muestran niveles de morosidad moderados, y los ingresos altos (600 000+) presentan la menor incidencia. Esto sugiere que las personas con ingresos medios podrían enfrentar mayor presión financiera, mientras que quienes perciben ingresos altos mantienen un comportamiento de pago más estable. Además, esta observación puede estar influida por los rangos utilizados; para análisis futuros, podría ser útil definir intervalos más cortos y precisos para capturar mejor la distribución de la morosidad."
+
+
+##Se busca encontrar cuáles son las variables que podrían tener mayor relación conque la persona sea morosa o no, para ello se decide realizar un árbol de decisión por su interpretabilidad y su fácil explicación a los altos mandos. A continuación se adjunta un código ejemplo de cómo se construye un árbol y cómo se muestra. Podría requerir codificar de una manera diferente algunas clases en las variables categóricas, esto para una mejor visualización.Explique los resultados del árbol para alguien que no tiene tanta formación cuantitativa y busca tomar decisiones con base en sus resultados.
+
+
+```{r}
+library(rpart)
+library(rpart.plot)
+library(dplyr)
+
+#Preparamos la tabla para poder hacer el arbol
+df.arbol <- data %>%
+  mutate(
+    TIPO_ASEGURAMIENTO = recode(
+      TIPO_ASEGURAMIENTO,
+      "PENSIONADOS EN SU PROPIO SISTEMA" = "PENSIONADOS",
+      "ASEGURADO VOLUNTARIO" = "VOLUNTARIO",
+      "TRABAJADOR INDEPENDIENTE" = "INDEPENDIENTE",
+      "CONVENIOS ESPECIALES DE TRABAJADORES INDEPENDIENTES" = "CONV.ESP.INDEP",
+      "CONVENIOS ESPECIALES DE ASEGURADOS VOLUNTARIOS" = "CONV.ESP.VOL"
+    ),
+    INDICADOR_MOROSO = toupper(as.character(INDICADOR_MOROSO))  # normalizar morosidad
+  ) %>%
+  select(-IDENTIFICACION) #Quitamos la identificacion para proceder con orden y evitar errores improvistos
+
+#Ahora construimos el arbol
+arbol <- rpart(INDICADOR_MOROSO ~ ., data = df.arbol, method = "class",
+               control = rpart.control(cp = 0.01)) 
+
+#Graficamos el arbol
+rpart.plot(
+  arbol,
+  type = 2,
+  extra = 104,
+  under = TRUE,
+  fallen.leaves = TRUE,
+  box.palette = "GnBu",
+  faclen = 8,
+  tweak = 0.8,       # tamaño del texto
+  shadow.col = "gray",
+  split.font = 2,
+  branch.lwd = 2,
+  branch = 1,
+  compress = FALSE   # Esto separa más los nodos
+)
+```
+
+Por lo tanto, el árbol de decisión que construimos con los datos de los asegurados nos permite ver de forma clara qué características están más relacionadas con la morosidad. Como lo es en este caso el tipo de asegurado. Además, cada división del árbol refleja una condición, como el tipo de aseguramiento, la edad o el rango salarial, y nos muestra cómo estas variables afectan la probabilidad de que alguien se vuelva moroso. Por ejemplo, podemos identificar que ciertos grupos, como los trabajadores independientes o quienes tienen convenios especiales, tienen una mayor tendencia a atrasarse en los pagos, mientras que asegurados con seguro activo y rangos salariales altos o medios presentan menor riesgo.
+
+Con esta información, podemos tomar decisiones concretas y estratégicas: priorizar el seguimiento de los grupos con mayor riesgo de morosidad, ajustar políticas de cobro o diseñar recordatorios específicos para ciertos tipos de asegurados. Además, el árbol permite visualizar fácilmente los nodos más críticos, de manera que incluso sin conocimientos matemáticos profundos se puede entender dónde se concentra el riesgo y qué acciones tomar para minimizarlo. Esto convierte al árbol en una herramienta práctica para orientar decisiones basadas en datos y mejorar la gestión de los asegurados.
