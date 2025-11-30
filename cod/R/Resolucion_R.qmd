@@ -1,0 +1,74 @@
+---
+title: "Resolucion_R"
+format: html
+---
+
+##Realice un resumen de 5 números incluyendo el promedio. Para las columnas numéricas
+ 
+```{r}
+#Procedemos como vimos con la carga del archivo par trabajar:
+
+#Como es un archivo txt usamos:
+getwd()
+
+library(here)
+
+data <- read.table(here("data", "moras.txt"), header = TRUE, sep = ",", dec = ".", stringsAsFactors = FALSE)
+
+#Primero veamos el formato tq:
+str(data)
+
+#Necesitamos cambiar las variables para proceder:
+data$SALARIO <- gsub("\"", "", data$SALARIO)      
+data$SALARIO <- gsub(",", ".", data$SALARIO) 
+data$SALARIO <- as.numeric(data$SALARIO)
+
+str(data) #Listo ya tenemos todo bien :)
+
+#Ahora realizamos el resumen solicitado:
+
+resumen5.Num <- data.frame(
+  Números = c("Minimo", "Maximo", "Cuartil1", "Mediana(cuartil2)", "cuartil3", "promedio"),
+  Salario = c(
+    min(data$SALARIO, na.rm = TRUE),
+    max(data$SALARIO, na.rm = TRUE),
+    quantile(data$SALARIO, 0.25, na.rm = TRUE),
+    median(data$SALARIO, na.rm = TRUE),
+    quantile(data$SALARIO, 0.75, na.rm = TRUE),
+    mean(data$SALARIO, na.rm = TRUE)
+  ),
+  Edad = c(
+    min(data$EDAD, na.rm = TRUE),
+    max(data$EDAD, na.rm = TRUE),
+    quantile(data$EDAD, 0.25, na.rm = TRUE),
+    median(data$EDAD, na.rm = TRUE),
+    quantile(data$EDAD, 0.75, na.rm = TRUE),
+    mean(data$EDAD, na.rm = TRUE)
+  )
+)
+resumen5.Num
+
+```
+ 
+ 
+##Realice una columna donde se identifiquen valores atípicos haciendo uso del Z-Score, de tal manera que si el valor absoluto del Z-Score es mayor a 1,96 se considera un valor atípico. Esto para la columna de salario y edad.
+
+Se asume que ya se conoce que es una Z-Score
+
+```{r}
+library(dplyr)
+
+data <- data %>%
+  mutate(
+    Z.SAL = (SALARIO - mean(SALARIO, na.rm = TRUE)) / sd(SALARIO, na.rm = TRUE),
+    VALORES.SALARIO = ifelse(abs(Z.SAL) > 1.96, "ATIPICO", "NORMAL"),
+
+    Z.EDAD = (EDAD - mean(EDAD, na.rm = TRUE)) / sd(EDAD, na.rm = TRUE),
+    VALORES.EDAD = ifelse(abs(Z.EDAD) > 1.96, "ATIPICO", "NORMAL")
+  )
+data %>% 
+  select(Z.SAL, VALORES.SALARIO, Z.EDAD, VALORES.EDAD) %>% 
+  head(10)
+```
+
+##Detecte el porcentaje de valores faltantes en cada una de las columnas.
